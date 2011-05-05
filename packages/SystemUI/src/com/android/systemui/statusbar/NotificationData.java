@@ -83,10 +83,6 @@ public class NotificationData {
         return null;
     }
 
-    void clear() {
-        mEntries.clear();
-    }
-
     private int chooseIndex(final long when) {
         final int N = mEntries.size();
         for (int i=0; i<N; i++) {

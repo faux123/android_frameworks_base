@@ -16,19 +16,16 @@
 
 package com.android.systemui.statusbar;
 
-
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
-import android.content.res.Resources;
-import android.text.format.DateFormat;
-
 import android.util.AttributeSet;
 import android.util.Slog;
 import android.widget.TextView;
 import android.view.MotionEvent;
 
+import java.text.DateFormat;
 import java.util.Date;
 
 public final class DateView extends TextView {
@@ -70,9 +67,7 @@ public final class DateView extends TextView {
 
     private final void updateClock() {
         Date now = new Date();
-        Resources res = Resources.getSystem();
-        setText(DateFormat.format(res.getString(com.android.internal.R.string.abbrev_wday_month_day_year),now));
-        
+        setText(DateFormat.getDateInstance(DateFormat.LONG).format(now));
     }
 
     void setUpdates(boolean update) {
