@@ -1,6 +1,5 @@
 /*
  * Copyright (C) 2006 The Android Open Source Project
- * Patched by Sven Dawitz; Copyright (C) 2011 CyanogenMod Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -50,7 +49,6 @@ import android.os.ServiceManager;
 import android.os.SystemClock;
 import android.os.SystemProperties;
 import android.os.Vibrator;
-import android.provider.CmSystem;
 import android.provider.Settings;
 
 import com.android.internal.policy.PolicyManager;
@@ -217,7 +215,7 @@ public class PhoneWindowManager implements WindowManagerPolicy {
     WindowState mStatusBar = null;
     final ArrayList<WindowState> mStatusBarPanels = new ArrayList<WindowState>();
     WindowState mKeyguard = null;
-    KeyguardViewMediator mKeyguardMediator = null;
+    KeyguardViewMediator mKeyguardMediator;
     GlobalActions mGlobalActions;
     volatile boolean mPowerKeyHandled;
     RecentApplicationsDialog mRecentAppsDialog;
@@ -240,9 +238,6 @@ public class PhoneWindowManager implements WindowManagerPolicy {
     static final int DEFAULT_ACCELEROMETER_ROTATION = 0;
     int mAccelerometerDefault = DEFAULT_ACCELEROMETER_ROTATION;
     boolean mHasSoftInput = false;
-    boolean mCameraKeyPressable = false;
-    static final long NEXT_DURATION = 400;
-    private boolean mBottomBar;
     
     int mousePointerMode = 0;
     MousePointerView mousePointerView = null;
@@ -260,10 +255,13 @@ public class PhoneWindowManager implements WindowManagerPolicy {
             }
         }
     };
-
+    
     int mPointerLocationMode = 0;
     PointerLocationView mPointerLocationView = null;
     InputChannel mPointerLocationInputChannel;
+    boolean mCameraKeyPressable = false;
+    static final long NEXT_DURATION = 400;
+
 
     private final InputHandler mPointerLocationInputHandler = new BaseInputHandler() {
         @Override
@@ -373,8 +371,6 @@ public class PhoneWindowManager implements WindowManagerPolicy {
                     Settings.System.VOLBTN_MUSIC_CONTROLS), false, this);
             resolver.registerContentObserver(Settings.System.getUriFor(
                     Settings.System.CAMBTN_MUSIC_CONTROLS), false, this);
-            resolver.registerContentObserver(Settings.System.getUriFor(
-                    Settings.System.STATUS_BAR_BOTTOM), false, this);
             updateSettings();
         }
 
@@ -405,7 +401,7 @@ public class PhoneWindowManager implements WindowManagerPolicy {
                 // Ignore
 
             }
-        }
+        }                                      
     }
     MyOrientationListener mOrientationListener;
 
@@ -643,7 +639,7 @@ public class PhoneWindowManager implements WindowManagerPolicy {
         };
     };
 
-    protected void sendMediaButtonEvent(int code) {
+    private void sendMediaButtonEvent(int code) {
         long eventtime = SystemClock.uptimeMillis();
 
         Intent downIntent = new Intent(Intent.ACTION_MEDIA_BUTTON, null);
@@ -655,15 +651,6 @@ public class PhoneWindowManager implements WindowManagerPolicy {
         KeyEvent upEvent = new KeyEvent(eventtime, eventtime, KeyEvent.ACTION_UP, code, 0);
         upIntent.putExtra(Intent.EXTRA_KEY_EVENT, upEvent);
         mContext.sendOrderedBroadcast(upIntent, null);
-    }
-
-    protected void sendHwButtonEvent(int keycode) {
-        try {
-            mWindowManager.injectKeyEvent(new KeyEvent(KeyEvent.ACTION_DOWN, keycode), true);
-            mWindowManager.injectKeyEvent(new KeyEvent(KeyEvent.ACTION_UP, keycode), true);
-        } catch (RemoteException e) {
-            e.printStackTrace();
-        }
     }
 
     /**
@@ -700,8 +687,7 @@ public class PhoneWindowManager implements WindowManagerPolicy {
         mContext = context;
         mWindowManager = windowManager;
         mPowerManager = powerManager;
-        if(mKeyguardMediator==null)
-            mKeyguardMediator = new KeyguardViewMediator(context, this, powerManager);
+        mKeyguardMediator = new KeyguardViewMediator(context, this, powerManager);
         mHandler = new Handler();
         mOrientationListener = new MyOrientationListener(mContext);
         SettingsObserver settingsObserver = new SettingsObserver(mHandler);
@@ -784,9 +770,6 @@ public class PhoneWindowManager implements WindowManagerPolicy {
                     Settings.System.VOLBTN_MUSIC_CONTROLS, 1) == 1);
             mCamBtnMusicControls = (Settings.System.getInt(resolver,
                     Settings.System.CAMBTN_MUSIC_CONTROLS, 0) == 1);
-            int defValue=(CmSystem.getDefaultBool(mContext, CmSystem.CM_DEFAULT_BOTTOM_STATUS_BAR) ? 1 : 0);
-            mBottomBar = (Settings.System.getInt(resolver,
-                    Settings.System.STATUS_BAR_BOTTOM, defValue) == 1);
             int accelerometerDefault = Settings.System.getInt(resolver,
                     Settings.System.ACCELEROMETER_ROTATION, DEFAULT_ACCELEROMETER_ROTATION);
             if (mAccelerometerDefault != accelerometerDefault) {
@@ -1600,14 +1583,6 @@ public class PhoneWindowManager implements WindowManagerPolicy {
             final Rect vf = mTmpVisibleFrame;
             pf.left = df.left = vf.left = 0;
             pf.top = df.top = vf.top = 0;
-
-            if(mBottomBar){
-                //get status bar height from dimen.xml
-                final int statusbar_height= mContext.getResources().getDimensionPixelSize(com.android.internal.R.dimen.status_bar_height);
-                //setting status bar's top, to bottom of the screen, minus status bar height
-                pf.top = df.top = vf.top = (displayHeight-statusbar_height);
-            }
-
             pf.right = df.right = vf.right = displayWidth;
             pf.bottom = df.bottom = vf.bottom = displayHeight;
             
@@ -1615,12 +1590,7 @@ public class PhoneWindowManager implements WindowManagerPolicy {
             if (mStatusBar.isVisibleLw()) {
                 // If the status bar is hidden, we don't want to cause
                 // windows behind it to scroll.
-                if(mBottomBar)
-                    //setting activites bottoms, to top of status bar
-                    mDockBottom = mContentBottom = mCurBottom = mStatusBar.getFrameLw().top;
-                else
-                    mDockTop = mContentTop = mCurTop = mStatusBar.getFrameLw().bottom;
-
+                mDockTop = mContentTop = mCurTop = mStatusBar.getFrameLw().bottom;
                 if (DEBUG_LAYOUT) Log.v(TAG, "Status bar: mDockBottom="
                         + mDockBottom + " mContentBottom="
                         + mContentBottom + " mCurBottom=" + mCurBottom);
@@ -2055,8 +2025,8 @@ public class PhoneWindowManager implements WindowManagerPolicy {
     }
 
     void handleVolumeLongPressAbort() {
-        mHandler.removeCallbacks(mVolumeUpLongPress);
-        mHandler.removeCallbacks(mVolumeDownLongPress);
+            mHandler.removeCallbacks(mVolumeUpLongPress);
+            mHandler.removeCallbacks(mVolumeDownLongPress);
     }
 
     void handleCameraKeyDown() {
@@ -2140,13 +2110,12 @@ public class PhoneWindowManager implements WindowManagerPolicy {
         switch (keyCode) {
             case KeyEvent.KEYCODE_VOLUME_DOWN:
             case KeyEvent.KEYCODE_VOLUME_UP: {
-                // cm71 nightlies: will be replaced by CmPhoneWindowManager's new volume handling
                 if(mVolBtnMusicControls && !down)
                 {
                     handleVolumeLongPressAbort();
 
                     // delay handling volume events if mVolBtnMusicControls is desired
-                    if (!mIsLongPress && (result & ACTION_PASS_TO_USER) == 0)
+                    if (!mIsLongPress  && (result & ACTION_PASS_TO_USER) == 0)
                         handleVolumeKey(AudioManager.STREAM_MUSIC, keyCode);
                 }
                 if (down) {
@@ -2184,7 +2153,6 @@ public class PhoneWindowManager implements WindowManagerPolicy {
                         }
                     }
 
-                    // cm71 nightlies: will be replaced by CmPhoneWindowManager's new volume handling
                     if (isMusicActive() && (result & ACTION_PASS_TO_USER) == 0) {
                         // Care for long-press actions to skip tracks
                         if(mVolBtnMusicControls) {
@@ -2568,7 +2536,7 @@ public class PhoneWindowManager implements WindowManagerPolicy {
     public void systemReady() {
         // tell the keyguard
         mKeyguardMediator.onSystemReady();
-        android.os.SystemProperties.set("dev.bootcomplete", "1");
+        android.os.SystemProperties.set("dev.bootcomplete", "1"); 
         synchronized (mLock) {
             updateOrientationListenerLp();
             mSystemReady = true;

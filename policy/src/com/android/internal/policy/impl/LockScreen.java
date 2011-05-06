@@ -167,8 +167,11 @@ class LockScreen extends LinearLayout implements KeyguardScreen, KeyguardUpdateM
     private String mCustomAppActivity = (Settings.System.getString(mContext.getContentResolver(),
             Settings.System.LOCKSCREEN_CUSTOM_APP_ACTIVITY));
 
+//    private int mLockscreenStyle = (Settings.System.getInt(mContext.getContentResolver(),
+//            Settings.System.LOCKSCREEN_STYLE_PREF, 3));
+
     private int mLockscreenStyle = (Settings.System.getInt(mContext.getContentResolver(),
-            Settings.System.LOCKSCREEN_STYLE_PREF, 3));
+            Settings.System.LOCKSCREEN_STYLE_PREF, 1));
 
     private int mCustomIconStyle = Settings.System.getInt(mContext.getContentResolver(),
             Settings.System.LOCKSCREEN_CUSTOM_ICON_STYLE, 1);

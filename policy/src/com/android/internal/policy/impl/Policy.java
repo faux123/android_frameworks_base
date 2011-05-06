@@ -1,6 +1,5 @@
 /*
  * Copyright (C) 2008 The Android Open Source Project
- * Patched by Sven Dawitz; Copyright (C) 2011 CyanogenMod Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -64,7 +63,7 @@ public class Policy implements IPolicy {
         return new PhoneLayoutInflater(context);
     }
 
-    public CmPhoneWindowManager makeNewWindowManager() {
-        return new CmPhoneWindowManager();
+    public PhoneWindowManager makeNewWindowManager() {
+        return new PhoneWindowManager();
     }
 }
