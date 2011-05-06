@@ -113,25 +113,25 @@ public class NotificationGroup implements Parcelable {
         builder.append("</notificationGroup>\n");
     }
 
-    public static NotificationGroup fromXml(XmlPullParser xpp) throws XmlPullParserException,
-            IOException {
-        return fromXml(xpp, null);
-    }
-    public static NotificationGroup fromXml(XmlPullParser xpp, Context context) throws XmlPullParserException,
-            IOException {
-        String attr = Profile.getAttrResString(xpp, context);
-        NotificationGroup notificationGroup = new NotificationGroup(attr);
-        int event = xpp.next();
-        while (event != XmlPullParser.END_TAG || !xpp.getName().equals("notificationGroup")) {
-            if (event == XmlPullParser.START_TAG) {
-                String name = xpp.getName();
-                if (name.equals("package")) {
-                    String pkg = xpp.nextText();
-                    notificationGroup.addPackage(pkg);
-                }
-            }
-            event = xpp.next();
-        }
-        return notificationGroup;
-    }
+//    public static NotificationGroup fromXml(XmlPullParser xpp) throws XmlPullParserException,
+//            IOException {
+//        return fromXml(xpp, null);
+//    }
+//    public static NotificationGroup fromXml(XmlPullParser xpp, Context context) throws XmlPullParserException,
+//            IOException {
+//        String attr = Profile.getAttrResString(xpp, context);
+//        NotificationGroup notificationGroup = new NotificationGroup(attr);
+//        int event = xpp.next();
+//        while (event != XmlPullParser.END_TAG || !xpp.getName().equals("notificationGroup")) {
+//            if (event == XmlPullParser.START_TAG) {
+//                String name = xpp.getName();
+//                if (name.equals("package")) {
+//                    String pkg = xpp.nextText();
+//                    notificationGroup.addPackage(pkg);
+//                }
+//            }
+//            event = xpp.next();
+//        }
+//        return notificationGroup;
+//    }
 }

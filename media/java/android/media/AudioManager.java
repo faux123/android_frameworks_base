@@ -18,8 +18,6 @@ package android.media;
 
 import android.annotation.SdkConstant;
 import android.annotation.SdkConstant.SdkConstantType;
-import android.app.ProfileGroup;
-import android.app.ProfileManager;
 import android.content.ComponentName;
 import android.content.Context;
 import android.os.Binder;
@@ -44,8 +42,6 @@ public class AudioManager {
 
     private final Context mContext;
     private final Handler mHandler;
-
-    private final ProfileManager mProfileManager;
 
     private static String TAG = "AudioManager";
     private static boolean DEBUG = false;
@@ -347,7 +343,6 @@ public class AudioManager {
     public AudioManager(Context context) {
         mContext = context;
         mHandler = new Handler(context.getMainLooper());
-        mProfileManager = (ProfileManager)context.getSystemService(Context.PROFILE_SERVICE);
     }
 
     private static IAudioService getService()
@@ -601,25 +596,6 @@ public class AudioManager {
      * @see #getVibrateSetting(int)
      */
     public boolean shouldVibrate(int vibrateType) {
-        String packageName = mContext.getPackageName();
-        // Don't apply profiles for "android" context, as these could
-        // come from the NotificationManager, and originate from a real package.
-        if(!packageName.equals("android")){
-            ProfileGroup profileGroup = mProfileManager.getActiveProfileGroup(packageName);
-            if(profileGroup != null){
-                Log.v(TAG, "shouldVibrate, group: " + profileGroup.getName() + " mode: " + profileGroup.getVibrateMode());
-                switch(profileGroup.getVibrateMode()){
-                    case OVERRIDE :
-                        return true;
-                    case SUPPRESS :
-                        return false;
-                    case DEFAULT :
-                        // Drop through
-                }
-            }
-        }else{
-            Log.v(TAG, "Not applying override for 'android' package");
-        }
         IAudioService service = getService();
         try {
             return service.shouldVibrate(vibrateType);

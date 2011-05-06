@@ -27,9 +27,6 @@ import android.app.Notification;
 import android.app.NotificationGroup;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
-import android.app.Profile;
-import android.app.ProfileGroup;
-import android.app.ProfileManager;
 import android.app.StatusBarManager;
 import android.content.BroadcastReceiver;
 import android.content.ComponentName;
@@ -960,19 +957,6 @@ public class NotificationManagerService extends INotificationManager.Stub
                         Binder.restoreCallingIdentity(identity);
                     }
                 }
-            }
-
-            try{
-                final ProfileManager profileManager = (ProfileManager) mContext
-                .getSystemService(Context.PROFILE_SERVICE);
-
-                Profile currentProfile = profileManager.getActiveProfile();
-                Log.v(TAG, "Active profile: " + currentProfile.getName());
-                ProfileGroup group = profileManager.getActiveProfileGroup(pkg);
-                Log.v(TAG, "Pkg: " + pkg + " group: " + group.getName());
-                notification = currentProfile.processNotification(group.getName(), notification);
-            }catch(Throwable th){
-                Log.e(TAG, "An error occurred profiling the notification.", th);
             }
 
             // If we're not supposed to beep, vibrate, etc. then don't.
