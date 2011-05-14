@@ -808,11 +808,7 @@ public class WifiService extends IWifiManager.Stub {
          * Unload the driver if going to a failed state
          */
         if ((mWifiApState == WIFI_AP_STATE_FAILED) && (flag == DriverAction.DRIVER_UNLOAD)) {
-            if (SystemProperties.getBoolean("wifi.hotspot.ti", false)) {
-                mWifiStateTracker.unloadHotspotDriver();
-            } else {
-                mWifiStateTracker.unloadDriver();
-            }
+            mWifiStateTracker.unloadDriver();
         }
 
         long ident = Binder.clearCallingIdentity();
@@ -935,15 +931,6 @@ public class WifiService extends IWifiManager.Stub {
         if (!TextUtils.isEmpty(value)) {
             try {
                 config.hiddenSSID = Integer.parseInt(value) != 0;
-            } catch (NumberFormatException ignore) {
-            }
-        }
-
-        value = mWifiStateTracker.getNetworkVariable(netId, WifiConfiguration.modeVarName);
-        config.adhocSSID = false;
-        if (!TextUtils.isEmpty(value)) {
-            try {
-                config.adhocSSID = Integer.parseInt(value) != 0;
             } catch (NumberFormatException ignore) {
             }
         }
@@ -1124,55 +1111,6 @@ public class WifiService extends IWifiManager.Stub {
                     Slog.d(TAG, "failed to set BSSID: "+config.BSSID);
                 }
                 break setVariables;
-            }
-
-            if(config.adhocSSID) {
-                if (DBG) {
-                    Slog.d(TAG, "setting adhoc network");
-                }
-                //Set Adhoc Mode
-                if (!mWifiStateTracker.setNetworkVariable(
-                        netId,
-                        WifiConfiguration.modeVarName,
-                        config.modeAdhoc)) {
-                    if (DBG) {
-                        Slog.d(TAG, "failed to set adhoc mode: " + config.adhocSSID);
-                    }
-                    break setVariables;
-                }
-
-                String frequency;
-                if (config.frequency != 0) {
-                    frequency = Integer.toString(config.frequency);
-                } else {
-                    //Default to channel 11
-                    frequency = Integer.toString(WifiConfiguration.ChannelFrequency.CHANNEL_11);
-                }
-
-                //Set frequency
-                if (!mWifiStateTracker.setNetworkVariable(
-                        netId,
-                        WifiConfiguration.frequencyVarName,
-                        frequency)) {
-                    if (DBG) {
-                        Slog.d(TAG, "failed to set frequency: " + frequency);
-                    }
-                    break setVariables;
-                }
-            } else {
-                if (DBG) {
-                    Slog.d(TAG, "setting non adhoc network");
-                }
-                //Set Infrastructure Mode
-                if (!mWifiStateTracker.setNetworkVariable(
-                        netId,
-                        WifiConfiguration.modeVarName,
-                        config.modeInfrastructure)) {
-                    if (DBG) {
-                        Slog.d(TAG, "failed to set infrastructure mode: " + config.adhocSSID);
-                    }
-                    break setVariables;
-                }
             }
 
             String allowedKeyManagementString =
