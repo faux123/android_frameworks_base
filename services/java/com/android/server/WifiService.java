@@ -808,7 +808,11 @@ public class WifiService extends IWifiManager.Stub {
          * Unload the driver if going to a failed state
          */
         if ((mWifiApState == WIFI_AP_STATE_FAILED) && (flag == DriverAction.DRIVER_UNLOAD)) {
-            mWifiStateTracker.unloadDriver();
+            if (SystemProperties.getBoolean("wifi.hotspot.ti", false)) {
+                mWifiStateTracker.unloadHotspotDriver();
+            } else {
+                mWifiStateTracker.unloadDriver();
+            }
         }
 
         long ident = Binder.clearCallingIdentity();
