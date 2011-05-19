@@ -903,7 +903,8 @@
     <string name="l2tp_vpn_description" msgid="3750692169378923304">"Protocolo de túnel de nivel 2"</string>
     <string name="l2tp_ipsec_psk_vpn_description" msgid="3945043564008303239">"Red privada virtual L2TP/IPSec basada en clave compartida previamente"</string>
     <string name="l2tp_ipsec_crt_vpn_description" msgid="5382714073103653577">"Red privada virtual L2TP/IPSec basada en certificado"</string>
-    <string name="upload_file" msgid="2897957172366730416">"Seleccionar archivo"</string>
+    <string name="openvpn_vpn_description">OpenVPN SSL VPN</string>
+        <string name="upload_file" msgid="2897957172366730416">"Seleccionar archivo"</string>
     <string name="reset" msgid="2448168080964209908">"Restablecer"</string>
     <string name="submit" msgid="1602335572089911941">"Enviar"</string>
     <string name="description_star" msgid="2654319874908576133">"favoritos"</string>

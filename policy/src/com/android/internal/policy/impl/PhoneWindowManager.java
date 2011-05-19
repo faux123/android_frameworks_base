@@ -302,6 +302,9 @@ public class PhoneWindowManager implements WindowManagerPolicy {
     // Behavior of trackball wake
     boolean mTrackballWakeScreen;
 
+    // Behavior of volume wake
+    boolean mVolumeWakeScreen;
+
     // Behavior of volbtn music controls
     boolean mVolBtnMusicControls;
     // Behavior of cambtn music controls
@@ -347,6 +350,8 @@ public class PhoneWindowManager implements WindowManagerPolicy {
                     "fancy_rotation_anim"), false, this);
             resolver.registerContentObserver(Settings.System.getUriFor(
                     Settings.System.TRACKBALL_WAKE_SCREEN), false, this);
+            resolver.registerContentObserver(Settings.System.getUriFor(
+                    Settings.System.VOLUME_WAKE_SCREEN), false, this);
             resolver.registerContentObserver(Settings.System.getUriFor(
                     Settings.System.VOLBTN_MUSIC_CONTROLS), false, this);
             resolver.registerContentObserver(Settings.System.getUriFor(
@@ -573,7 +578,11 @@ public class PhoneWindowManager implements WindowManagerPolicy {
                             && appInfo.importance == RunningAppProcessInfo.IMPORTANCE_FOREGROUND) {
                         // Kill the entire pid
                         Toast.makeText(mContext, R.string.app_killed_message, Toast.LENGTH_SHORT).show();
-                        Process.killProcess(appInfo.pid);
+                        if (appInfo.pkgList!=null && (apps.size() > 0)){
+                                mgr.forceStopPackage(appInfo.pkgList[0]);
+                        }else{
+                                Process.killProcess(appInfo.pid);
+                        }
                         break;
                     }
                 }
@@ -744,6 +753,8 @@ public class PhoneWindowManager implements WindowManagerPolicy {
                     "fancy_rotation_anim", 0) != 0 ? 0x80 : 0;
             mTrackballWakeScreen = (Settings.System.getInt(resolver,
                     Settings.System.TRACKBALL_WAKE_SCREEN, 1) == 1);
+            mVolumeWakeScreen = (Settings.System.getInt(resolver,
+                    Settings.System.VOLUME_WAKE_SCREEN, 1) == 1);
             mVolBtnMusicControls = (Settings.System.getInt(resolver,
                     Settings.System.VOLBTN_MUSIC_CONTROLS, 1) == 1);
             mCamBtnMusicControls = (Settings.System.getInt(resolver,
@@ -2017,7 +2028,14 @@ public class PhoneWindowManager implements WindowManagerPolicy {
 
             final boolean isWakeKey = (policyFlags
                     & (WindowManagerPolicy.FLAG_WAKE | WindowManagerPolicy.FLAG_WAKE_DROPPED)) != 0
-                    || ((keyCode == BTN_MOUSE) && mTrackballWakeScreen);
+                    || ((keyCode == BTN_MOUSE) && mTrackballWakeScreen)
+                    || ((keyCode == KeyEvent.KEYCODE_VOLUME_UP) && mVolumeWakeScreen)
+                    || ((keyCode == KeyEvent.KEYCODE_VOLUME_DOWN) && mVolumeWakeScreen);
+
+            // make sure keyevent get's handled as power key on volume-wake
+            if(!isScreenOn && mVolumeWakeScreen && isWakeKey && ((keyCode == KeyEvent.KEYCODE_VOLUME_UP)
+                    || (keyCode == KeyEvent.KEYCODE_VOLUME_DOWN)))
+                keyCode=KeyEvent.KEYCODE_POWER;
 
             if (down && isWakeKey) {
                 if (keyguardActive) {
