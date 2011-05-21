@@ -246,7 +246,7 @@ class PowerManagerService extends IPowerManager.Stub
     private int mScreenBrightnessOverride = -1;
     private int mButtonBrightnessOverride = -1;
     private boolean mUseSoftwareAutoBrightness;
-    private boolean mAutoBrightessEnabled;
+    private boolean mAutoBrightessEnabled = true;
     private int[] mAutoBrightnessLevels;
     private int[] mLcdBacklightValues;
     private int[] mButtonBacklightValues;
@@ -482,6 +482,7 @@ class PowerManagerService extends IPowerManager.Stub
         }
 
         public void update(Observable o, Object arg) {
+
             synchronized (mLocks) {
                 // STAY_ON_WHILE_PLUGGED_IN, default to when plugged into AC
                 mStayOnConditions = getInt(STAY_ON_WHILE_PLUGGED_IN,
@@ -1688,6 +1689,12 @@ class PowerManagerService extends IPowerManager.Stub
                     lightFilterStop();
                     resetLastLightValues();
                 }
+                else if (!mAutoBrightessEnabled) {
+                    /* Force a light sensor reset since we enabled it
+                       when the screen came on */
+                    mAutoBrightessEnabled = true;
+                    setScreenBrightnessMode(Settings.System.SCREEN_BRIGHTNESS_MODE_MANUAL);
+                }
             }
         }
         return err;
@@ -2571,6 +2578,7 @@ class PowerManagerService extends IPowerManager.Stub
             }
             return;
         }
+
 
         // do not allow light sensor value to decrease unless
         // user has actively permitted it
