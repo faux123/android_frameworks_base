@@ -931,4 +931,8 @@
 
     <string name="wildcardProfile">他</string>
     <string name="global_action_choose_profile">プロファイル選択</string>
+
+        <!-- Item on EditText context menu. This action is used to copy all text in the edit field. -->
+    <string name="copyAll">全てコピー</string>
+
 </resources>
