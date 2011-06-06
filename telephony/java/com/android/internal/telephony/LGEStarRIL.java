@@ -103,7 +103,7 @@ public class LGEStarRIL extends RIL implements CommandsInterface {
         send(rr);
 
         if(mPrepSetupPending) {
-            /* Not the nicest thing to do, but it prevents "Unknown type" 
+            /* Not the nicest thing to do, but it prevents "Unknown type"
                errors */
             if (SystemProperties.get("ro.build.product").equals("p990"))
                 mNetworkMode = 0;
@@ -158,7 +158,7 @@ public class LGEStarRIL extends RIL implements CommandsInterface {
     }
 
     /**
-     * long DTMF doesn't work with the regular syntax, convert to short 
+     * long DTMF doesn't work with the regular syntax, convert to short
      */
     public void
     startDtmf(char c, Message result) {
@@ -197,7 +197,7 @@ public class LGEStarRIL extends RIL implements CommandsInterface {
 
         send(rr);
     }
- 
+
     private Message saveDataCall;
 
     public void
@@ -218,7 +218,7 @@ public class LGEStarRIL extends RIL implements CommandsInterface {
         rr.mp.writeString(user);
         rr.mp.writeString(password);
         rr.mp.writeString(authType);
-        rr.mp.writeString(protocol); 
+        rr.mp.writeString(protocol);
         rr.mp.writeInt(1); // cid
 
         if (RILJ_LOGD) riljLog(rr.serialString() + "> "
@@ -795,7 +795,7 @@ public class LGEStarRIL extends RIL implements CommandsInterface {
         num = p.readInt();
 
         response = new String[3];
-    
+
         response[0] = p.readString();
         response[2] = p.readString();
         ifname = p.readString();
@@ -826,7 +826,8 @@ public class LGEStarRIL extends RIL implements CommandsInterface {
         /* Get the actual date string */
         parceldata = p.readString();
         /* Filter out whatever it is LG is attaching here */
-        parceldata = parceldata.substring(0,(parceldata.lastIndexOf(",")));
+        if (SystemProperties.get("ro.build.product").equals("p990"))
+            parceldata = parceldata.substring(0,(parceldata.lastIndexOf(",")));
 
         /* WTH... Date comes in localtime, must be converted to UTC */
         try {
@@ -844,7 +845,7 @@ public class LGEStarRIL extends RIL implements CommandsInterface {
         }
 
         /* Append the timezone */
-        response = response + ((num < 0) ? "-" : "+");
+        response = response + ((num < 0) ? "" : "+");
         response = response + num;
 
         return response;
