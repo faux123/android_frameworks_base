@@ -813,15 +813,10 @@ public class LGEStarRIL extends RIL implements CommandsInterface {
         int num;
         String parceldata;
         String response;
-        String[] tzIds;
         SimpleDateFormat dateFormatter;
         SimpleDateFormat dateParser;
 
-
         num = p.readInt(); // TZ diff in quarter-hours
-
-        /* Get a list of usable identifiers for the parser */
-        tzIds = TimeZone.getAvailableIDs((num/4)*3600*1000);
 
         /* Get the actual date string */
         parceldata = p.readString();
@@ -829,13 +824,10 @@ public class LGEStarRIL extends RIL implements CommandsInterface {
         if (SystemProperties.get("ro.build.product").equals("p990"))
             parceldata = parceldata.substring(0,(parceldata.lastIndexOf(",")));
 
-        /* WTH... Date comes in localtime, must be converted to UTC */
+        /* WTH... Date may come with 4 digits in the year, reduce to 2 */
         try {
             dateFormatter = new SimpleDateFormat("yy/MM/dd,HH:mm:ss");
-            dateFormatter.setTimeZone(TimeZone.getTimeZone("UTC"));
-
             dateParser = new SimpleDateFormat("yy/MM/dd,HH:mm:ss");
-            dateParser.setTimeZone(TimeZone.getTimeZone(tzIds[0]));
 
             response = dateFormatter.format(dateParser.parse(parceldata));
 
