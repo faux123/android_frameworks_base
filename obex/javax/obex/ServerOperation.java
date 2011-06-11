@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2009, Motorola, Inc.
+ * Copyright (c) 2010-2011, Motorola, Inc.
  *
  * All rights reserved.
  *
@@ -92,6 +92,8 @@ public final class ServerOperation implements Operation, BaseStream {
     private ObexByteBuffer mBodyBuffer;
 
     private ObexByteBuffer mHeaderBuffer;
+
+    private boolean mEndofBody = true;
 
     /**
      * Creates new ServerOperation
@@ -366,23 +368,30 @@ public final class ServerOperation implements Operation, BaseStream {
                  */
                 if ((finalBitSet) || (mPrivateOutput.isClosed())) {
                     mBodyBuffer.write((byte)0x49);
+                    if (mEndofBody) {
+                        mBodyBuffer.write(0x49);
+                        bodyLength += 3;
+                        mBodyBuffer.write((byte)(bodyLength >> 8));
+                        mBodyBuffer.write((byte)bodyLength);
+                        mPrivateOutput.writeTo(mBodyBuffer, bodyLength - 3);
+                    }
                 } else {
                     mBodyBuffer.write((byte)0x48);
+                    bodyLength += 3;
+                    mBodyBuffer.write((byte)(bodyLength >> 8));
+                    mBodyBuffer.write((byte)bodyLength);
+                    mPrivateOutput.writeTo(mBodyBuffer, bodyLength - 3);
                 }
-
-                bodyLength += 3;
-                mBodyBuffer.write((byte)(bodyLength >> 8));
-                mBodyBuffer.write((byte)bodyLength);
-                mPrivateOutput.writeTo(mBodyBuffer, bodyLength - 3);
             }
         }
 
         if ((finalBitSet) && (type == ResponseCodes.OBEX_HTTP_OK) && (orginalBodyLength <= 0)) {
-            mBodyBuffer.write((byte)0x49);
-            orginalBodyLength = 3;
-            mBodyBuffer.write((byte)(orginalBodyLength >> 8));
-            mBodyBuffer.write((byte)orginalBodyLength);
-
+            if (mEndofBody) {
+                mBodyBuffer.write((byte)0x49);
+                orginalBodyLength = 3;
+                mBodyBuffer.write((byte)(orginalBodyLength >> 8));
+                mBodyBuffer.write((byte)orginalBodyLength);
+            }
         }
 
         mResponseSize = 3;
@@ -704,4 +713,9 @@ public final class ServerOperation implements Operation, BaseStream {
     public void streamClosed(boolean inStream) throws IOException {
 
     }
+
+    public void noEndofBody() {
+        mEndofBody = false;
+    }
+
 }
