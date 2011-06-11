@@ -369,7 +369,7 @@ public final class ServerOperation implements Operation, BaseStream {
                 if ((finalBitSet) || (mPrivateOutput.isClosed())) {
                     mBodyBuffer.write((byte)0x49);
                     if (mEndofBody) {
-                        mBodyBuffer.write(0x49);
+                        mBodyBuffer.write((byte)0x49);
                         bodyLength += 3;
                         mBodyBuffer.write((byte)(bodyLength >> 8));
                         mBodyBuffer.write((byte)bodyLength);
