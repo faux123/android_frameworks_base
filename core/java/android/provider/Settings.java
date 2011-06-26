@@ -2269,6 +2269,12 @@ public final class Settings {
         public static final String IN_CALL_STYLE_PREF = "in_call_style_pref";
 
         /**
+         * Enable the Trackball notification.  The value is boolean (1 or 0).
+         * @hide
+         */
+        public static final String TRACKBALL_NOTIFICATION_ON = "trackball_notification_on";
+
+        /**
          * Pulse the Trackball with Screen On.  The value is boolean (1 or 0).
          * @hide
          */

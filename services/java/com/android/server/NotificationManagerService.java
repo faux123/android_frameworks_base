@@ -382,6 +382,11 @@ public class NotificationManagerService extends INotificationManager.Stub
 
             boolean queryRestart = false;
 
+            boolean mTrackballNotification = Settings.System.getInt(
+                        mContext.getContentResolver(),
+                        Settings.System.TRACKBALL_NOTIFICATION_ON, 0) != 0;
+
+            // battery notifications
             if (action.equals(Intent.ACTION_BATTERY_CHANGED)) {
                 boolean batteryCharging = (intent.getIntExtra("plugged", 0) != 0);
                 int level = intent.getIntExtra("level", -1);
@@ -403,6 +408,7 @@ public class NotificationManagerService extends INotificationManager.Stub
                         updateRGBLights();
                     }
                 }
+            // USB notifications
             } else if (action.equals(UsbManager.ACTION_USB_STATE)) {
                 Bundle extras = intent.getExtras();
                 boolean usbConnected = extras.getBoolean(UsbManager.USB_CONNECTED);
@@ -434,7 +440,8 @@ public class NotificationManagerService extends INotificationManager.Stub
                         cancelAllNotificationsInt(pkgName, 0, 0, !queryRestart);
                     }
                 }
-            } else if (action.equals(Intent.ACTION_SCREEN_ON)) {
+            // LED Lights notifications
+            } else if (action.equals(Intent.ACTION_SCREEN_ON) && mTrackballNotification) {
                 mScreenOn = true;
                 if (mAmberGreenLight) {
                     if (!mNotificationAlwaysOnEnabled) {
@@ -446,7 +453,7 @@ public class NotificationManagerService extends INotificationManager.Stub
                         updateNotificationPulse();
                     }
                 }
-            } else if (action.equals(Intent.ACTION_SCREEN_OFF)) {
+            } else if (action.equals(Intent.ACTION_SCREEN_OFF) && mTrackballNotification) {
                 mScreenOn = false;
                 if (mAmberGreenLight) {
                     if (!mNotificationAlwaysOnEnabled) {
@@ -458,6 +465,7 @@ public class NotificationManagerService extends INotificationManager.Stub
                         updateNotificationPulse();
                     }
                 }
+            // Telephony notifications
             } else if (action.equals(TelephonyManager.ACTION_PHONE_STATE_CHANGED)) {
                 mInCall = (intent.getStringExtra(TelephonyManager.EXTRA_STATE).equals(TelephonyManager.EXTRA_STATE_OFFHOOK));
                 if (mAmberGreenLight) {
