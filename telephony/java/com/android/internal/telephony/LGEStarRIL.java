@@ -474,6 +474,34 @@ public class LGEStarRIL extends RIL implements CommandsInterface {
         rr.release();
     }
 
+    protected Object
+    responseDataCallListChanged(Parcel p) {
+        int num;
+        ArrayList<DataCallState> response;
+
+        num = p.readInt();
+        response = new ArrayList<DataCallState>(num);
+
+        for (int i = 0; i < num; i++) {
+            DataCallState dataCall = new DataCallState();
+
+            dataCall.cid = p.readInt();
+            dataCall.active = p.readInt();
+            dataCall.type = p.readString();
+            dataCall.apn = p.readString();
+            String address = p.readString();
+            if (address != null) {
+                address = address.split(" ")[0];
+            }
+            dataCall.address = address;
+            if (dataCall.active != 0)
+                showPdpAddress(null);
+            response.add(dataCall);
+        }
+
+        return response;
+    }
+
 
     protected void
     processUnsolicited (Parcel p) {
@@ -492,7 +520,7 @@ public class LGEStarRIL extends RIL implements CommandsInterface {
             case RIL_UNSOL_ON_USSD: ret =  responseStrings(p); break;
             case RIL_UNSOL_NITZ_TIME_RECEIVED: ret =  responseNitz(p); break;
             case RIL_UNSOL_SIGNAL_STRENGTH: ret = responseSignalStrength(p); break;
-            case RIL_UNSOL_DATA_CALL_LIST_CHANGED: ret = responseDataCallList(p);break;
+            case RIL_UNSOL_DATA_CALL_LIST_CHANGED: ret = responseDataCallListChanged(p);break;
             case RIL_UNSOL_SUPP_SVC_NOTIFICATION: ret = responseSuppServiceNotification(p); break;
             case RIL_UNSOL_STK_SESSION_END: ret = responseVoid(p); break;
             case RIL_UNSOL_STK_PROACTIVE_COMMAND: ret = responseString(p); break;
