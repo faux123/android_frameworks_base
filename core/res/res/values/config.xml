@@ -411,6 +411,11 @@
     <string-array name="config_twoDigitNumberPattern">
     </string-array>
 
+    <!-- Contains a list of vendor specific services to start via ServiceManager.
+         Format for each item is: <path_to_service_jar_file>:<service_class_name> -->
+    <string-array name="config_vendorServices">
+    </string-array>
+
     <!-- Set this to true to get data working on some Motorola phones -->
     <bool name="config_rilNeedsNullPath">false</bool>
 
