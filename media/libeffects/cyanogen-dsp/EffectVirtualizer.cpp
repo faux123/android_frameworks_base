@@ -72,8 +72,7 @@ int32_t EffectVirtualizer::command(uint32_t cmdCode, uint32_t cmdSize, void* pCm
 	/* Center channel forward direction adjustment filter. */
 	mColorization.setParameters(fir44100);
 	/* the -3 dB point is around 650 Hz, giving about 300 us to work with */
-	mLocalizationL.setHighShelf(800.0f, mSamplingRate, -11.0f, 0.72f);
-	mLocalizationR.setHighShelf(800.0f, mSamplingRate, -11.0f, 0.72f);
+	mLocalization.setHighShelf(800.0f, mSamplingRate, -11.0f, 0.72f);
 
 	mDelayDataL = 0;
 	mDelayDataR = 0;
@@ -177,18 +176,16 @@ int32_t EffectVirtualizer::process(audio_buffer_t* in, audio_buffer_t* out)
 	/* Center channel. */
 	int32_t center  = (dataL + dataR) >> 1;
 	/* Direct radiation components. */
-	int32_t directL = dataL - center;
-	int32_t directR = dataR - center;
+	int32_t side = (dataL - dataR) >> 1;
 
 	/* Adjust derived center channel coloration to emphasize forward
 	 * direction impression. (XXX: disabled until configurable). */
 	//center = mColorization.process(center);
 	/* Sound reaching ear from the opposite speaker */
-	int32_t headL = mLocalizationL.process(directR);
-	int32_t headR = mLocalizationR.process(directL);
+	side -= mLocalization.process(side);
         
-        write(out, i * 2, center + directL + headL);
-        write(out, i * 2 + 1, center + directR + headR);
+        write(out, i * 2, center + side);
+        write(out, i * 2 + 1, center - side);
     }
 
     return mEnable ? 0 : -ENODATA;

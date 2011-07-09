@@ -17,7 +17,7 @@ class EffectVirtualizer : public Effect {
     Delay mReverbDelayL, mReverbDelayR;
     int64_t mDelayDataL, mDelayDataR;
     FIR16 mColorization;
-    Biquad mLocalizationL, mLocalizationR;
+    Biquad mLocalization;
 
     void refreshStrength();
 
