@@ -21,6 +21,7 @@ import android.app.AlertDialog;
 import android.bluetooth.BluetoothA2dp;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothHeadset;
+import android.bluetooth.BluetoothHid;
 import android.bluetooth.BluetoothPbap;
 import android.content.BroadcastReceiver;
 import android.content.ContentResolver;
@@ -478,6 +479,7 @@ public class StatusBarPolicy {
     // bluetooth device status
     private int mBluetoothHeadsetState;
     private boolean mBluetoothA2dpConnected;
+    private int mBluetoothHidState;
     private int mBluetoothPbapState;
     private boolean mBluetoothEnabled;
 
@@ -546,7 +548,9 @@ public class StatusBarPolicy {
             }
             else if (action.equals(BluetoothAdapter.ACTION_STATE_CHANGED) ||
                     action.equals(BluetoothHeadset.ACTION_STATE_CHANGED) ||
+                    action.equals(BluetoothHid.HID_DEVICE_STATE_CHANGED_ACTION) ||
                     action.equals(BluetoothA2dp.ACTION_SINK_STATE_CHANGED) ||
+                    action.equals(BluetoothHid.HID_DEVICE_STATE_CHANGED_ACTION) ||
                     action.equals(BluetoothPbap.PBAP_STATE_CHANGED_ACTION)) {
                 updateBluetooth(intent);
             }
@@ -576,7 +580,10 @@ public class StatusBarPolicy {
             }
             else if (action.equals(WimaxManagerConstants.WIMAX_ENABLED_STATUS_CHANGED) ||
                      action.equals(WimaxManagerConstants.SIGNAL_LEVEL_CHANGED_ACTION) ||
-                     action.equals(WimaxManagerConstants.WIMAX_STATE_CHANGED_ACTION)) {
+                     action.equals(WimaxManagerConstants.WIMAX_STATE_CHANGED_ACTION) ||
+                     action.equals(WimaxManagerConstants.NETWORK_STATE_CHANGED_ACTION) ||
+                     action.equals(WimaxManagerConstants.WIMAX_ENABLED_CHANGED_ACTION) ||
+                     action.equals(WimaxManagerConstants.RSSI_CHANGED_ACTION)) {
                 updateWiMAX(intent);
             }
         }
@@ -681,6 +688,7 @@ public class StatusBarPolicy {
         filter.addAction(AudioManager.VIBRATE_SETTING_CHANGED_ACTION);
         filter.addAction(BluetoothAdapter.ACTION_STATE_CHANGED);
         filter.addAction(BluetoothHeadset.ACTION_STATE_CHANGED);
+        filter.addAction(BluetoothHid.HID_DEVICE_STATE_CHANGED_ACTION);
         filter.addAction(BluetoothA2dp.ACTION_SINK_STATE_CHANGED);
         filter.addAction(BluetoothPbap.PBAP_STATE_CHANGED_ACTION);
         filter.addAction(WifiManager.WIFI_STATE_CHANGED_ACTION);
@@ -696,6 +704,9 @@ public class StatusBarPolicy {
         filter.addAction(WimaxManagerConstants.WIMAX_STATE_CHANGED_ACTION);
         filter.addAction(WimaxManagerConstants.SIGNAL_LEVEL_CHANGED_ACTION);
         filter.addAction(WimaxManagerConstants.WIMAX_ENABLED_STATUS_CHANGED);
+        filter.addAction(WimaxManagerConstants.WIMAX_ENABLED_CHANGED_ACTION);
+        filter.addAction(WimaxManagerConstants.NETWORK_STATE_CHANGED_ACTION);
+        filter.addAction(WimaxManagerConstants.RSSI_CHANGED_ACTION);
 
         mContext.registerReceiver(mIntentReceiver, filter, null, mHandler);
 
@@ -1084,13 +1095,25 @@ public class StatusBarPolicy {
             // If 3G(EV) and 1x network are available than 3G should be
             // displayed, displayed RSSI should be from the EV side.
             // If a voice call is made then RSSI should switch to 1x.
-            if ((mPhoneState == TelephonyManager.CALL_STATE_IDLE) && isEvdo()){
-                iconLevel = getEvdoLevel();
-                if (false) {
-                    Slog.d(TAG, "use Evdo level=" + iconLevel + " to replace Cdma Level=" + getCdmaLevel());
-                }
+
+            // Samsung CDMA devices handle signal strength display differently
+            // relying only on cdmaDbm - thanks Adr0it for the assistance here
+            if (SystemProperties.get("ro.ril.samsung_cdma").equals("true")) {
+                final int cdmaDbm = mSignalStrength.getCdmaDbm();
+                if (cdmaDbm >= -75) iconLevel = 4;
+                else if (cdmaDbm >= -85)  iconLevel = 3;
+                else if (cdmaDbm >= -95)  iconLevel = 2;
+                else if (cdmaDbm >= -100) iconLevel = 1;
+                else iconLevel = 0;
             } else {
-                iconLevel = getCdmaLevel();
+                if ((mPhoneState == TelephonyManager.CALL_STATE_IDLE) && isEvdo()){
+                    iconLevel = getEvdoLevel();
+                    if (false) {
+                        Slog.d(TAG, "use Evdo level=" + iconLevel + " to replace Cdma Level=" + getCdmaLevel());
+                    }
+                } else {
+                    iconLevel = getCdmaLevel();
+                }
             }
         }
         mPhoneSignalIconId = iconList[iconLevel];
@@ -1280,11 +1303,15 @@ public class StatusBarPolicy {
         } else if (action.equals(BluetoothPbap.PBAP_STATE_CHANGED_ACTION)) {
             mBluetoothPbapState = intent.getIntExtra(BluetoothPbap.PBAP_STATE,
                     BluetoothPbap.STATE_DISCONNECTED);
+        } else if (action.equals(BluetoothHid.HID_DEVICE_STATE_CHANGED_ACTION)) {
+            mBluetoothHidState = intent.getIntExtra(BluetoothHid.HID_DEVICE_STATE,
+                    BluetoothHid.STATE_DISCONNECTED);
         } else {
             return;
         }
 
         if (mBluetoothHeadsetState == BluetoothHeadset.STATE_CONNECTED || mBluetoothA2dpConnected ||
+                mBluetoothHidState == BluetoothHid.STATE_CONNECTED ||
                 mBluetoothPbapState == BluetoothPbap.STATE_CONNECTED) {
             iconId = R.drawable.stat_sys_data_bluetooth_connected;
         }
@@ -1343,8 +1370,22 @@ public class StatusBarPolicy {
                     mIsWimaxEnabled = false;
                     break;
             }
+        } else if (action.equals(WimaxManagerConstants.WIMAX_ENABLED_CHANGED_ACTION)) {
+            int wimaxStatus = intent.getIntExtra(WimaxManagerConstants.CURRENT_WIMAX_ENABLED_STATE,
+                    WimaxManagerConstants.WIMAX_ENABLED_STATE_UNKNOWN);
+            mIsWimaxEnabled = (wimaxStatus == WimaxManagerConstants.WIMAX_ENABLED_STATE_ENABLED);
         } else if (action.equals(WimaxManagerConstants.SIGNAL_LEVEL_CHANGED_ACTION)) {
             mWimaxSignal = intent.getIntExtra(WimaxManagerConstants.EXTRA_NEW_SIGNAL_LEVEL, 0);
+        } else if (action.equals(WimaxManagerConstants.RSSI_CHANGED_ACTION)) {
+            int rssi = intent.getIntExtra(WimaxManagerConstants.EXTRA_NEW_RSSI_LEVEL, -200);
+            Slog.d(TAG, "WiMAX RSSI: " + rssi);
+            if (rssi >= 3) {
+                mWimaxSignal = 3;
+            } else if (rssi <= 0) {
+                mWimaxSignal = 0;
+            } else {
+                mWimaxSignal = rssi;
+            }
         } else if (action.equals(WimaxManagerConstants.WIMAX_STATE_CHANGED_ACTION)) {
             mWimaxState = intent.getIntExtra(WimaxManagerConstants.EXTRA_WIMAX_STATE,
                     WimaxManagerConstants.WIMAX_STATE_UNKNOWN);
@@ -1364,6 +1405,16 @@ public class StatusBarPolicy {
                         iconId = sWimaxSignalImages[mInetCondition][mWimaxSignal];
                     }
                     break;
+            }
+            mService.setIcon("wimax", iconId, 0);
+        } else if (action.equals(WimaxManagerConstants.NETWORK_STATE_CHANGED_ACTION)) {
+            final NetworkInfo networkInfo = (NetworkInfo) intent.getParcelableExtra(WimaxManagerConstants.EXTRA_NETWORK_INFO);
+            if (networkInfo != null && networkInfo.isConnected()) {
+                iconId = sWimaxSignalImages[mInetCondition][mWimaxSignal];
+            } else if (networkInfo != null && networkInfo.isAvailable()) {
+                iconId = sWimaxIdleImg;
+            } else {
+                iconId = sWimaxDisconnectedImg;
             }
             mService.setIcon("wimax", iconId, 0);
         }
