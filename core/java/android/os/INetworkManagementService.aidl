@@ -208,6 +208,16 @@ interface INetworkManagementService
     int getInterfaceTxThrottle(String iface);
 
     /**
+     * Start Bluetooth NAP service
+     */
+    void startPan();
+
+    /**
+     * Stop Bluetooth NAP service
+     */
+    void stopPan();
+
+    /**
      * Sets the name of the default interface in the DNS resolver.
      */
     void setDefaultInterfaceForDns(String iface);
