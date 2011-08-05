@@ -470,6 +470,9 @@ public class StatusBarPolicy {
     ServiceState mServiceState;
     SignalStrength mSignalStrength;
 
+    // flag for signal strength behavior
+    private boolean mAlwaysUseCdmaRssi;
+
     // data connection
     private boolean mDataIconVisible;
     private boolean mHspaDataDistinguishable;
@@ -608,6 +611,21 @@ public class StatusBarPolicy {
         mPhone = (TelephonyManager)context.getSystemService(Context.TELEPHONY_SERVICE);
         mPhoneSignalIconId = R.drawable.stat_sys_signal_null;
         mService.setIcon("phone_signal", mPhoneSignalIconId, 0);
+        mAlwaysUseCdmaRssi = mContext.getResources().getBoolean(
+            com.android.internal.R.bool.config_alwaysUseCdmaRssi);
+
+        // load config to determine if phone should be hidden
+        try {
+            mPhoneSignalHidden = mContext.getResources().getBoolean(
+                R.bool.config_statusbar_hide_phone_signal);
+        } catch (Exception e) {
+            mPhoneSignalHidden = false;
+        }
+
+        // hide phone_signal icon if hidden
+        if (mPhoneSignalHidden) {
+            mService.setIconVisibility("phone_signal", false);
+        }
 
         // register for phone state notifications.
         ((TelephonyManager)mContext.getSystemService(Context.TELEPHONY_SERVICE))
@@ -1107,13 +1125,21 @@ public class StatusBarPolicy {
                 else if (cdmaDbm >= -100) iconLevel = 1;
                 else iconLevel = 0;
             } else {
-                if ((mPhoneState == TelephonyManager.CALL_STATE_IDLE) && isEvdo()){
+                if ((mPhoneState == TelephonyManager.CALL_STATE_IDLE) && isEvdo()
+                    && !mAlwaysUseCdmaRssi) {
                     iconLevel = getEvdoLevel();
                     if (false) {
                         Slog.d(TAG, "use Evdo level=" + iconLevel + " to replace Cdma Level=" + getCdmaLevel());
                     }
                 } else {
-                    iconLevel = getCdmaLevel();
+                    if ((mPhoneState == TelephonyManager.CALL_STATE_IDLE) && isEvdo()){
+                        iconLevel = getEvdoLevel();
+                        if (false) {
+                            Slog.d(TAG, "use Evdo level=" + iconLevel + " to replace Cdma Level=" + getCdmaLevel());
+                        }
+                    } else {
+                        iconLevel = getCdmaLevel();
+                    }
                 }
             }
         }
