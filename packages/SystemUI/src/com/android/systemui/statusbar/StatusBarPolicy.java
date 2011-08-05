@@ -593,6 +593,9 @@ public class StatusBarPolicy {
         }
     };
 
+    // phone_signal visibility
+    private boolean mPhoneSignalHidden;
+
     public StatusBarPolicy(Context context) {
         mContext = context;
         mService = (StatusBarManager)context.getSystemService(Context.STATUS_BAR_SERVICE);
