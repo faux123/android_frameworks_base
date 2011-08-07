@@ -199,8 +199,6 @@ class GlobalActions implements DialogInterface.OnDismissListener, DialogInterfac
                 mSilentModeToggle,
                 // next: airplane mode
                 mAirplaneModeOn,
-                    }
-                },
                 // next: screenshot
                 new SinglePressAction(com.android.internal.R.drawable.ic_lock_screenshot, R.string.global_action_screenshot) {
                     public void onPress() {
