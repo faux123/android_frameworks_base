@@ -2026,11 +2026,20 @@ public class PhoneWindowManager implements WindowManagerPolicy {
             // to wake the device but don't pass the key to the application.
             result = 0;
 
-            final boolean isWakeKey = (policyFlags
+            boolean isWakeKey = (policyFlags
                     & (WindowManagerPolicy.FLAG_WAKE | WindowManagerPolicy.FLAG_WAKE_DROPPED)) != 0
                     || ((keyCode == BTN_MOUSE) && mTrackballWakeScreen)
                     || ((keyCode == KeyEvent.KEYCODE_VOLUME_UP) && mVolumeWakeScreen)
                     || ((keyCode == KeyEvent.KEYCODE_VOLUME_DOWN) && mVolumeWakeScreen);
+
+            // Don't wake the screen if we have not set the option "wake with volume" in CMParts
+            // regardless if WAKE Flag is set in keylayout
+            if (!isScreenOn
+                    && isWakeKey
+                    && !mVolumeWakeScreen
+                    && ((keyCode == KeyEvent.KEYCODE_VOLUME_UP) || (keyCode == KeyEvent.KEYCODE_VOLUME_DOWN))) {
+                isWakeKey = false;
+            }
 
             // make sure keyevent get's handled as power key on volume-wake
             if(!isScreenOn && mVolumeWakeScreen && isWakeKey && ((keyCode == KeyEvent.KEYCODE_VOLUME_UP)
@@ -2057,7 +2066,7 @@ public class PhoneWindowManager implements WindowManagerPolicy {
                     handleVolumeLongPressAbort();
 
                     // delay handling volume events if mVolBtnMusicControls is desired
-                    if (!mIsLongPress  && (result & ACTION_PASS_TO_USER) == 0)
+                    if (isMusicActive() && !mIsLongPress && (result & ACTION_PASS_TO_USER) == 0)
                         handleVolumeKey(AudioManager.STREAM_MUSIC, keyCode);
                 }
                 if (down) {
