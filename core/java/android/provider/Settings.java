@@ -1901,9 +1901,13 @@ public final class Settings {
         public static final String POWER_DIALOG_PROMPT = "power_dialog_prompt";
 
         /**
-         * How many ms to delay before enabling the screen lock when the screen
-         * goes off due to timeout
-         *
+         * Specifies whether to show share dialog after
+         * taking screenshot
+         * @hide
+         */
+        public static final String SHARE_SCREENSHOT = "share_screenshot";
+
+        /**
          * @hide
          */
         public static final String SCREEN_LOCK_TIMEOUT_DELAY = "screen_lock_timeout_delay";
